@@ -1,0 +1,12 @@
+{
+  "tests": [
+    {
+      "name": "Get reviews",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {"reviews": []},
+      "bodyMatcher": "partial"
+    }
+  ]
+}

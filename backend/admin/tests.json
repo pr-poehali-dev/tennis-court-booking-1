@@ -1,0 +1,22 @@
+{
+  "tests": [
+    {
+      "name": "Admin login wrong password",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "login", "password": "wrong"},
+      "expectedStatus": 401,
+      "expectedBody": {"error": "wrong_password"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Admin login correct",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "login", "password": "Pinkpups07"},
+      "expectedStatus": 200,
+      "expectedBody": {"success": true},
+      "bodyMatcher": "partial"
+    }
+  ]
+}
