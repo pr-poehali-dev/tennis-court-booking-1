@@ -459,7 +459,22 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
               <input
                 type="checkbox"
                 checked={trainer}
-                onChange={e => setTrainer(e.target.checked)}
+                onChange={async e => {
+                  const checked = e.target.checked;
+                  if (checked) {
+                    // Проверяем доступность тренера на выбранное время
+                    const res = await fetch(`${AVAIL_URL}?date=${selectedDate}&duration=${duration}&trainer=true`);
+                    const d = await res.json();
+                    const slot = d.slots?.find((s: Slot) => s.time === selectedTime);
+                    if (slot && !slot.available && slot.reason === 'trainer') {
+                      const nearest = d.slots?.find((s: Slot) => s.available);
+                      setError(`Извините, тренер недоступен в это время.${nearest ? ` Ближайшее доступное время с тренером: ${nearest.time}` : ''}`);
+                      return;
+                    }
+                  }
+                  setError('');
+                  setTrainer(checked);
+                }}
                 className="w-5 h-5 accent-[#2d6a4f]"
               />
             </label>
