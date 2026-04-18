@@ -294,7 +294,7 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
           {!loadingSlots && !dayBlocked && (
             <div>
               <p className="text-sm font-medium text-gray-700 mb-2">Время начала</p>
-              <div className="grid grid-cols-4 gap-2 max-h-56 overflow-y-auto pr-1">
+              <div className="grid grid-cols-4 gap-2">
                 {slots.map(slot => (
                   <button
                     key={slot.time}
