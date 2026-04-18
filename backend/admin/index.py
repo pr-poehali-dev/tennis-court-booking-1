@@ -79,6 +79,18 @@ def handler(event: dict, context) -> dict:
             conn.commit()
             return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'success': True})}
 
+        elif action == 'get_reviews':
+            cur.execute("SELECT id, name, rating, text, created_at FROM reviews ORDER BY created_at DESC")
+            rows = cur.fetchall()
+            reviews = [{'id': r[0], 'name': r[1], 'rating': r[2], 'text': r[3], 'created_at': str(r[4])} for r in rows]
+            return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'reviews': reviews})}
+
+        elif action == 'delete_review':
+            rid = body.get('id')
+            cur.execute("DELETE FROM reviews WHERE id = %s", (rid,))
+            conn.commit()
+            return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'success': True})}
+
         elif action == 'add_block':
             block_date = body.get('block_date')
             block_time = body.get('block_time')

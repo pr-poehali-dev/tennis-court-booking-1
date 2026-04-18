@@ -42,9 +42,10 @@ export default function AdminModal({ onClose }: { onClose: () => void }) {
   const [authed, setAuthed] = useState(false);
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
-  const [tab, setTab] = useState<'bookings' | 'blocks' | 'photo'>('bookings');
+  const [tab, setTab] = useState<'bookings' | 'blocks' | 'reviews' | 'photo'>('bookings');
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [blocks, setBlocks] = useState<Block[]>([]);
+  const [reviews, setReviews] = useState<{id: number; name: string; rating: number; text: string; created_at: string}[]>([]);
   const [loading, setLoading] = useState(false);
   const [blockDate, setBlockDate] = useState('');
   const [blockTime, setBlockTime] = useState('');
@@ -75,12 +76,14 @@ export default function AdminModal({ onClose }: { onClose: () => void }) {
 
   const loadData = async () => {
     setLoading(true);
-    const [bRes, blRes] = await Promise.all([
+    const [bRes, blRes, rRes] = await Promise.all([
       req({ action: 'get_bookings' }),
       req({ action: 'get_blocks' }),
+      req({ action: 'get_reviews' }),
     ]);
     setBookings(bRes.bookings || []);
     setBlocks(blRes.blocks || []);
+    setReviews(rRes.reviews || []);
     setLoading(false);
   };
 
@@ -98,6 +101,12 @@ export default function AdminModal({ onClose }: { onClose: () => void }) {
     if (!confirm('Удалить бронь полностью?')) return;
     await req({ action: 'delete_booking', id });
     setBookings(prev => prev.filter(b => b.id !== id));
+  };
+
+  const deleteReview = async (id: number) => {
+    if (!confirm('Удалить отзыв?')) return;
+    await req({ action: 'delete_review', id });
+    setReviews(prev => prev.filter(r => r.id !== id));
   };
 
   const addBlock = async () => {
@@ -165,13 +174,13 @@ export default function AdminModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="flex border-b border-gray-100">
-          {(['bookings', 'blocks', 'photo'] as const).map(t => (
+          {(['bookings', 'blocks', 'reviews', 'photo'] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`flex-1 py-3 text-sm font-medium transition-colors ${tab === t ? 'text-[#2d6a4f] border-b-2 border-[#2d6a4f]' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 py-3 text-xs font-medium transition-colors ${tab === t ? 'text-[#2d6a4f] border-b-2 border-[#2d6a4f]' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              {t === 'bookings' ? 'Брони' : t === 'blocks' ? 'Блокировки' : 'Фото'}
+              {t === 'bookings' ? 'Брони' : t === 'blocks' ? 'Блокировки' : t === 'reviews' ? 'Отзывы' : 'Фото'}
             </button>
           ))}
         </div>
@@ -305,6 +314,32 @@ export default function AdminModal({ onClose }: { onClose: () => void }) {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {!loading && tab === 'reviews' && (
+            <div className="space-y-3">
+              {reviews.length === 0 && <p className="text-center text-gray-400 py-8">Отзывов нет</p>}
+              {reviews.map(r => (
+                <div key={r.id} className="border border-gray-200 rounded-xl p-4">
+                  <div className="flex items-start justify-between mb-1">
+                    <div>
+                      <p className="font-semibold text-gray-800">{r.name}</p>
+                      <p className="text-yellow-400 text-sm">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</p>
+                    </div>
+                    <button
+                      onClick={() => deleteReview(r.id)}
+                      className="p-1.5 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Icon name="Trash2" size={16} className="text-red-400" />
+                    </button>
+                  </div>
+                  <p className="text-sm text-gray-600">{r.text}</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {new Date(r.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </p>
+                </div>
+              ))}
             </div>
           )}
 
