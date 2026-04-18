@@ -59,6 +59,7 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
   const [dayBlocked, setDayBlocked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [slotError, setSlotError] = useState('');
   const [suggestion, setSuggestion] = useState('');
   const [success, setSuccess] = useState(false);
 
@@ -80,6 +81,7 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     if (step === 'time' && selectedDate) {
       setLoadingSlots(true);
+      setSlotError('');
       fetch(`${AVAIL_URL}?date=${selectedDate}&duration=${duration}&trainer=${trainer}`)
         .then(r => r.json())
         .then(d => {
@@ -298,9 +300,17 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
                 {slots.map(slot => (
                   <button
                     key={slot.time}
-                    disabled={!slot.available}
-                    onClick={() => setSelectedTime(slot.time)}
-                    title={slot.available ? '' : slot.reason === 'trainer' ? 'Тренер недоступен' : 'Занято'}
+                    onClick={() => {
+                      if (slot.available) {
+                        setSelectedTime(slot.time);
+                        setSlotError('');
+                      } else {
+                        const nearest = slots.find(s => s.available);
+                        const reason = slot.reason === 'trainer' ? 'Тренер недоступен' : 'Корт недоступен';
+                        setSlotError(`${reason} в это время. ${nearest ? `Ближайшее доступное: ${nearest.time}` : 'На эту дату нет свободных слотов.'}`);
+                        setSelectedTime('');
+                      }
+                    }}
                     className={`py-2 rounded-lg text-sm font-medium border transition-all
                       ${selectedTime === slot.time ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : ''}
                       ${slot.available && selectedTime !== slot.time ? 'border-gray-200 text-gray-800 hover:border-[#2d6a4f]' : ''}
@@ -314,6 +324,11 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
             </div>
           )}
 
+          {slotError && (
+            <div className="mt-3 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+              <p className="text-sm text-red-600">{slotError}</p>
+            </div>
+          )}
           {suggestion && (
             <p className="text-sm text-[#2d6a4f] mt-2 bg-[#d8f3dc] px-3 py-2 rounded-lg">{suggestion}</p>
           )}
