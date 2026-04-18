@@ -1,6 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Icon from '@/components/ui/icon';
-import BookingModal from '@/components/BookingModal';
 
 const BOOKINGS_URL = 'https://functions.poehali.dev/1c87f267-5e77-414e-8812-eec899d49002';
 
@@ -31,19 +30,16 @@ function formatPhoneDisplay(raw: string) {
   return r;
 }
 
-export default function AccountModal({ onClose }: { onClose: () => void }) {
+export default function AccountModal({ onClose, savedPhone = '', savedName = '' }: { onClose: () => void; savedPhone?: string; savedName?: string }) {
   const [phone, setPhone] = useState('');
-  const [phoneInput, setPhoneInput] = useState('');
+  const [phoneInput, setPhoneInput] = useState(savedPhone);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
   const [cancellingId, setCancellingId] = useState<number | null>(null);
-  const [editBooking, setEditBooking] = useState<Booking | null>(null);
 
-  const searchBookings = async () => {
-    const digits = phoneInput.replace(/\D/g, '');
-    if (digits.length < 10) { setError('Введите корректный номер телефона'); return; }
+  const doSearch = async (digits: string) => {
     setLoading(true); setError('');
     try {
       const res = await fetch(`${BOOKINGS_URL}?phone=${digits}`);
@@ -54,6 +50,19 @@ export default function AccountModal({ onClose }: { onClose: () => void }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Автозагрузка если есть сохранённый номер
+  useEffect(() => {
+    if (savedPhone && savedPhone.length >= 10) {
+      doSearch(savedPhone);
+    }
+  }, []);
+
+  const searchBookings = async () => {
+    const digits = phoneInput.replace(/\D/g, '');
+    if (digits.length < 10) { setError('Введите корректный номер телефона'); return; }
+    doSearch(digits);
   };
 
   const cancelBooking = async (id: number) => {
@@ -141,6 +150,7 @@ export default function AccountModal({ onClose }: { onClose: () => void }) {
         ) : (
           <div>
             <div className="bg-gray-50 rounded-xl p-4 mb-5">
+              {savedName && <p className="font-bold text-gray-900 text-lg mb-1">{savedName}</p>}
               <p className="text-sm text-gray-500">Номер телефона</p>
               <p className="font-semibold text-gray-800">{formatPhoneDisplay(phone)}</p>
               {totalHours > 0 && (

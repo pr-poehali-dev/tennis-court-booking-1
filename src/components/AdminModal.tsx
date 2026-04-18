@@ -76,8 +76,8 @@ export default function AdminModal({ onClose }: { onClose: () => void }) {
   const loadData = async () => {
     setLoading(true);
     const [bRes, blRes] = await Promise.all([
-      fetch(`${ADMIN_URL}?action=get_bookings`, { headers: { 'X-Admin-Token': 'admin_ok' } }).then(r => r.json()),
-      fetch(`${ADMIN_URL}?action=get_blocks`, { headers: { 'X-Admin-Token': 'admin_ok' } }).then(r => r.json()),
+      req({ action: 'get_bookings' }),
+      req({ action: 'get_blocks' }),
     ]);
     setBookings(bRes.bookings || []);
     setBlocks(blRes.blocks || []);

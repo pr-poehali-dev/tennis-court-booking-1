@@ -136,6 +136,8 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
       });
       const data = await res.json();
       if (res.ok && data.success) {
+        localStorage.setItem('tennis_phone', digits);
+        localStorage.setItem('tennis_name', name.trim());
         setSuccess(true);
       } else if (data.error === 'time_conflict') {
         setError(data.message);

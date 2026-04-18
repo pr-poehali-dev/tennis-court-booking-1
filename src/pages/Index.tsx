@@ -11,10 +11,14 @@ const COURT_IMG = 'https://cdn.poehali.dev/projects/3307ddc1-c587-4adf-8b5b-08ca
 export default function Index() {
   const [modal, setModal] = useState<'booking' | 'account' | 'review' | 'admin' | null>(null);
   const [courtImage, setCourtImage] = useState(COURT_IMG);
+  const savedPhone = localStorage.getItem('tennis_phone') || '';
+  const savedName = localStorage.getItem('tennis_name') || '';
 
   useEffect(() => {
-    fetch('https://functions.poehali.dev/0043f98f-94ed-4fe0-aaa1-d7b96efb3382?action=get_settings', {
-      headers: { 'X-Admin-Token': 'admin_ok' }
+    fetch('https://functions.poehali.dev/0043f98f-94ed-4fe0-aaa1-d7b96efb3382', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Token': 'admin_ok' },
+      body: JSON.stringify({ action: 'get_settings' }),
     })
       .then(r => r.json())
       .then(d => {
@@ -39,14 +43,14 @@ export default function Index() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setModal('account')}
-                className="flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white border border-white/30 rounded-full px-4 py-2 text-sm font-medium hover:bg-white/30 transition-all"
+                className="flex items-center gap-2 bg-white/80 backdrop-blur-sm text-gray-800 border border-white rounded-full px-4 py-2 text-sm font-semibold hover:bg-white transition-all shadow-md"
               >
                 <Icon name="User" size={16} />
                 Личный кабинет
               </button>
               <button
                 onClick={() => setModal('review')}
-                className="flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white border border-white/30 rounded-full px-4 py-2 text-sm font-medium hover:bg-white/30 transition-all"
+                className="flex items-center gap-2 bg-white/80 backdrop-blur-sm text-gray-800 border border-white rounded-full px-4 py-2 text-sm font-semibold hover:bg-white transition-all shadow-md"
               >
                 <Icon name="MessageSquare" size={16} />
                 Оставить отзыв
@@ -59,7 +63,7 @@ export default function Index() {
               Теннисный корт
             </h1>
             <p className="text-white/80 text-lg text-center mb-10">
-              Богородский район, д. Буурцево, Вишнёвый переулок 17Б
+              Богородский район, д. Бурцево, Вишнёвый переулок 17Б
             </p>
             <button
               onClick={() => setModal('booking')}
@@ -94,7 +98,7 @@ export default function Index() {
             <div className="w-12 h-12 bg-[#d8f3dc] rounded-xl flex items-center justify-center mx-auto mb-3">
               <Icon name="MapPin" size={22} className="text-[#2d6a4f]" />
             </div>
-            <div className="font-bold text-gray-900 text-lg">Буурцево</div>
+            <div className="font-bold text-gray-900 text-lg">Бурцево</div>
             <div className="text-gray-500 text-sm mt-1">Богородский район</div>
           </div>
         </div>
@@ -110,7 +114,7 @@ export default function Index() {
           </a>
         </p>
         <p className="text-gray-400 text-xs mt-2">
-          Богородский район, д. Буурцево, Вишнёвый переулок 17Б
+          Богородский район, д. Бурцево, Вишнёвый переулок 17Б
         </p>
         <button
           onClick={() => setModal('admin')}
@@ -121,7 +125,7 @@ export default function Index() {
       </footer>
 
       {modal === 'booking' && <BookingModal onClose={() => setModal(null)} />}
-      {modal === 'account' && <AccountModal onClose={() => setModal(null)} />}
+      {modal === 'account' && <AccountModal onClose={() => setModal(null)} savedPhone={savedPhone} savedName={savedName} />}
       {modal === 'review' && <ReviewModal onClose={() => setModal(null)} />}
       {modal === 'admin' && <AdminModal onClose={() => setModal(null)} />}
     </div>
