@@ -73,6 +73,12 @@ def handler(event: dict, context) -> dict:
             conn.commit()
             return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'success': True})}
 
+        elif action == 'delete_booking':
+            bid = body.get('id')
+            cur.execute("DELETE FROM bookings WHERE id = %s", (bid,))
+            conn.commit()
+            return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'success': True})}
+
         elif action == 'add_block':
             block_date = body.get('block_date')
             block_time = body.get('block_time')

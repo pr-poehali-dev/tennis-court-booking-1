@@ -94,6 +94,12 @@ export default function AdminModal({ onClose }: { onClose: () => void }) {
     setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'cancelled' } : b));
   };
 
+  const deleteBooking = async (id: number) => {
+    if (!confirm('Удалить бронь полностью?')) return;
+    await req({ action: 'delete_booking', id });
+    setBookings(prev => prev.filter(b => b.id !== id));
+  };
+
   const addBlock = async () => {
     if (!blockDate) return;
     await req({ action: 'add_block', block_date: blockDate, block_time: blockTime || null, block_end_time: blockEndTime || null, block_type: blockType, reason: blockReason });
@@ -197,24 +203,30 @@ export default function AdminModal({ onClose }: { onClose: () => void }) {
                       {b.trainer && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">Тренер</span>}
                     </div>
                   )}
-                  {b.status !== 'cancelled' && (
-                    <div className="flex gap-2">
-                      {b.status !== 'confirmed' && (
-                        <button
-                          onClick={() => confirmBooking(b.id)}
-                          className="text-sm bg-[#d8f3dc] text-[#2d6a4f] font-medium px-3 py-1.5 rounded-lg hover:bg-[#b7e4c7] transition-colors"
-                        >
-                          Подтвердить
-                        </button>
-                      )}
+                  <div className="flex gap-2 flex-wrap">
+                    {b.status !== 'cancelled' && b.status !== 'confirmed' && (
+                      <button
+                        onClick={() => confirmBooking(b.id)}
+                        className="text-sm bg-[#d8f3dc] text-[#2d6a4f] font-medium px-3 py-1.5 rounded-lg hover:bg-[#b7e4c7] transition-colors"
+                      >
+                        Подтвердить
+                      </button>
+                    )}
+                    {b.status !== 'cancelled' && (
                       <button
                         onClick={() => cancelBooking(b.id)}
                         className="text-sm bg-red-50 text-red-500 font-medium px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors"
                       >
                         Отменить
                       </button>
-                    </div>
-                  )}
+                    )}
+                    <button
+                      onClick={() => deleteBooking(b.id)}
+                      className="text-sm bg-gray-100 text-gray-500 font-medium px-3 py-1.5 rounded-lg hover:bg-gray-200 transition-colors ml-auto"
+                    >
+                      Удалить
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
