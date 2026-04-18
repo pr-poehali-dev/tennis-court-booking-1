@@ -13,7 +13,10 @@ const DURATIONS = [
 const AGE_OPTIONS = ['3–6 лет', '7–12 лет', '13+ лет'];
 
 function formatDate(d: Date) {
-  return d.toISOString().split('T')[0];
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 function parsePhone(v: string) {
@@ -31,8 +34,8 @@ function formatPhoneDisplay(raw: string) {
   return r;
 }
 
-const MIN_DATE = new Date('2026-04-20');
-const MAX_DATE = new Date('2026-11-01');
+const MIN_DATE = new Date(2026, 3, 20);
+const MAX_DATE = new Date(2026, 10, 1);
 
 type Step = 'date' | 'time' | 'extras' | 'contacts' | 'confirm';
 
