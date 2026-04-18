@@ -39,7 +39,7 @@ const statusColor: Record<string, string> = {
 };
 
 export default function AdminModal({ onClose }: { onClose: () => void }) {
-  const [authed, setAuthed] = useState(false);
+  const [authed, setAuthed] = useState(() => localStorage.getItem('admin_authed') === '1');
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [tab, setTab] = useState<'bookings' | 'blocks' | 'reviews' | 'photo'>('bookings');
@@ -47,6 +47,7 @@ export default function AdminModal({ onClose }: { onClose: () => void }) {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [reviews, setReviews] = useState<{id: number; name: string; rating: number; text: string; created_at: string}[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const [blockDate, setBlockDate] = useState('');
   const [blockTime, setBlockTime] = useState('');
   const [blockEndTime, setBlockEndTime] = useState('');
@@ -56,15 +57,29 @@ export default function AdminModal({ onClose }: { onClose: () => void }) {
   const [photoUrl, setPhotoUrl] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Автозагрузка если уже авторизован на этом устройстве
+  useEffect(() => {
+    if (authed) loadData();
+  }, []);
+
   const login = async () => {
-    const res = await fetch(ADMIN_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'login', password }),
-    });
-    const data = await res.json();
-    if (data.success) { setAuthed(true); loadData(); }
-    else setAuthError('Неверный пароль');
+    try {
+      const res = await fetch(ADMIN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'login', password }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem('admin_authed', '1');
+        setAuthed(true);
+        loadData();
+      } else {
+        setAuthError('Неверный пароль');
+      }
+    } catch {
+      setAuthError('Ошибка соединения');
+    }
   };
 
   const req = (body: object) =>
@@ -76,15 +91,21 @@ export default function AdminModal({ onClose }: { onClose: () => void }) {
 
   const loadData = async () => {
     setLoading(true);
-    const [bRes, blRes, rRes] = await Promise.all([
-      req({ action: 'get_bookings' }),
-      req({ action: 'get_blocks' }),
-      req({ action: 'get_reviews' }),
-    ]);
-    setBookings(bRes.bookings || []);
-    setBlocks(blRes.blocks || []);
-    setReviews(rRes.reviews || []);
-    setLoading(false);
+    setLoadError('');
+    try {
+      const [bRes, blRes, rRes] = await Promise.all([
+        req({ action: 'get_bookings' }),
+        req({ action: 'get_blocks' }),
+        req({ action: 'get_reviews' }),
+      ]);
+      setBookings(bRes.bookings || []);
+      setBlocks(blRes.blocks || []);
+      setReviews(rRes.reviews || []);
+    } catch {
+      setLoadError('Не удалось загрузить данные. Попробуйте обновить.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const confirmBooking = async (id: number) => {
@@ -168,9 +189,14 @@ export default function AdminModal({ onClose }: { onClose: () => void }) {
       <div className="relative bg-white rounded-t-3xl md:rounded-2xl w-full md:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <h2 className="text-xl font-bold text-gray-900">Админ-панель</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
-            <Icon name="X" size={18} className="text-gray-500" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={loadData} disabled={loading} className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-40" title="Обновить">
+              <Icon name="RefreshCw" size={16} className="text-gray-500" />
+            </button>
+            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+              <Icon name="X" size={18} className="text-gray-500" />
+            </button>
+          </div>
         </div>
 
         <div className="flex border-b border-gray-100">
@@ -187,6 +213,14 @@ export default function AdminModal({ onClose }: { onClose: () => void }) {
 
         <div className="flex-1 overflow-y-auto p-6">
           {loading && <p className="text-center text-gray-400 py-8">Загружаем данные...</p>}
+          {!loading && loadError && (
+            <div className="text-center py-8">
+              <p className="text-red-500 text-sm mb-3">{loadError}</p>
+              <button onClick={loadData} className="bg-[#2d6a4f] text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-[#1b4332] transition-colors">
+                Повторить
+              </button>
+            </div>
+          )}
 
           {!loading && tab === 'bookings' && (
             <div className="space-y-3">
