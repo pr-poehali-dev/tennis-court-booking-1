@@ -46,6 +46,23 @@ interface Slot {
   reason: string | null;
 }
 
+async function findNearestDate(fromDate: string, duration: number, trainer: boolean): Promise<string> {
+  const cur = new Date(fromDate + 'T12:00:00');
+  for (let i = 1; i <= 60; i++) {
+    cur.setDate(cur.getDate() + 1);
+    if (cur > MAX_DATE) break;
+    const ds = formatDate(cur);
+    try {
+      const res = await fetch(`${AVAIL_URL}?date=${ds}&duration=${duration}&trainer=${trainer}`);
+      const d = await res.json();
+      if (!d.day_blocked && d.slots?.some((s: Slot) => s.available)) {
+        return new Date(ds + 'T12:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+      }
+    } catch { break; }
+  }
+  return 'не найден';
+}
+
 export default function BookingModal({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState<Step>('date');
   const [selectedDate, setSelectedDate] = useState('');
@@ -60,6 +77,7 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
   const [slots, setSlots] = useState<Slot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [dayBlocked, setDayBlocked] = useState(false);
+  const [dateError, setDateError] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [slotError, setSlotError] = useState('');
@@ -81,8 +99,28 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
     return p;
   })();
 
+  // При выборе даты — сразу проверяем доступность дня
   useEffect(() => {
-    if (step === 'time' && selectedDate) {
+    if (!selectedDate) return;
+    setDateError('');
+    setDayBlocked(false);
+    fetch(`${AVAIL_URL}?date=${selectedDate}&duration=${duration}&trainer=${trainer}`)
+      .then(r => r.json())
+      .then(async d => {
+        if (d.day_blocked) {
+          setDayBlocked(true);
+          // Ищем ближайшую доступную дату
+          const nearest = await findNearestDate(selectedDate, duration, trainer);
+          setDateError(`Извините, этот день недоступен. Ближайший доступный: ${nearest}`);
+        } else {
+          setDayBlocked(false);
+          setSlots(d.slots || []);
+        }
+      });
+  }, [selectedDate, duration, trainer]);
+
+  useEffect(() => {
+    if (step === 'time' && selectedDate && !dayBlocked) {
       setLoadingSlots(true);
       setSlotError('');
       fetch(`${AVAIL_URL}?date=${selectedDate}&duration=${duration}&trainer=${trainer}`)
@@ -93,7 +131,7 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
         })
         .finally(() => setLoadingSlots(false));
     }
-  }, [step, selectedDate, duration, trainer]);
+  }, [step]);
 
   const getDates = () => {
     const dates: Date[] = [];
@@ -261,10 +299,16 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
               );
             })}
           </div>
+          {dateError && (
+            <div className="mt-4 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+              <p className="text-sm text-red-600">{dateError}</p>
+            </div>
+          )}
+
           <button
-            disabled={!selectedDate}
+            disabled={!selectedDate || !!dateError}
             onClick={() => setStep('time')}
-            className="mt-6 w-full bg-[#2d6a4f] text-white font-semibold py-3 rounded-xl hover:bg-[#1b4332] disabled:opacity-40 transition-colors"
+            className="mt-4 w-full bg-[#2d6a4f] text-white font-semibold py-3 rounded-xl hover:bg-[#1b4332] disabled:opacity-40 transition-colors"
           >
             Далее
           </button>
