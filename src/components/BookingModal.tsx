@@ -210,7 +210,7 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
             <p className="text-amber-700 text-sm">
               Переведите <strong>{total} ₽</strong> по номеру{' '}
               <strong>8 930 278 29 29</strong> (Арсений, Т-Банк) не позднее чем
-              за 10 минут до начала. Иначе бронь сгорает.
+              за 1 час до начала. Иначе бронь сгорает.
             </p>
           </div>
           <button
@@ -281,7 +281,9 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const d = new Date(calYear, calMonth, i + 1);
               const ds = formatDate(d);
-              const inRange = d >= MIN_DATE && d <= MAX_DATE;
+              const today = new Date(); today.setHours(0,0,0,0);
+              const isPast = d < today;
+              const inRange = d >= MIN_DATE && d <= MAX_DATE && !isPast;
               const selected = ds === selectedDate;
               return (
                 <button

@@ -187,7 +187,7 @@ export default function AccountModal({ onClose, savedPhone = '', savedName = '' 
                       <div className="bg-amber-50 rounded-lg p-2 mb-2">
                         <p className="text-xs text-amber-700">
                           Оплатите <strong>{b.total_price} ₽</strong> по номеру{' '}
-                          <strong>8 930 278 29 29</strong> (Арсений, Т-Банк) за 10 минут до начала
+                          <strong>8 930 278 29 29</strong> (Арсений, Т-Банк) за 1 час до начала
                         </p>
                       </div>
                     )}

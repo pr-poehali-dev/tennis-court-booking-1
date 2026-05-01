@@ -104,6 +104,21 @@ export default function Index() {
         </div>
 
         <ReviewsList />
+
+        <div className="mt-8 rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+          <div className="flex items-center gap-2 px-4 py-3 bg-white border-b border-gray-100">
+            <Icon name="MapPin" size={18} className="text-[#2d6a4f]" />
+            <span className="font-semibold text-gray-800 text-sm">Богородский район, д. Бурцево, Вишнёвый переулок 17Б</span>
+          </div>
+          <iframe
+            src="https://yandex.ru/map-widget/v1/?text=%D0%91%D0%BE%D0%B3%D0%BE%D1%80%D0%BE%D0%B4%D1%81%D0%BA%D0%B8%D0%B9%20%D1%80%D0%B0%D0%B9%D0%BE%D0%BD%2C%20%D0%B4.%20%D0%91%D1%83%D1%80%D1%86%D0%B5%D0%B2%D0%BE%2C%20%D0%92%D0%B8%D1%88%D0%BD%D1%91%D0%B2%D1%8B%D0%B9%20%D0%BF%D0%B5%D1%80%D0%B5%D1%83%D0%BB%D0%BE%D0%BA%2017%D0%91&z=15&l=map"
+            width="100%"
+            height="320"
+            style={{ border: 0, display: 'block' }}
+            allowFullScreen
+            title="Карта"
+          />
+        </div>
       </div>
 
       <footer className="border-t border-gray-200 bg-white py-8 px-6 text-center">
