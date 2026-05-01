@@ -2,6 +2,8 @@ import json
 import os
 import psycopg2
 import boto3
+import urllib.request
+import urllib.parse
 
 CORS_HEADERS = {
     'Access-Control-Allow-Origin': '*',
@@ -11,6 +13,27 @@ CORS_HEADERS = {
 }
 
 ADMIN_PASSWORD = 'Pinkpups07'
+
+
+def send_sms(phone: str, message: str):
+    login = os.environ.get('SMSC_LOGIN', '')
+    password = os.environ.get('SMSC_PASSWORD', '')
+    if not login or not password:
+        return
+    clean_phone = ''.join(c for c in phone if c.isdigit())
+    params = urllib.parse.urlencode({
+        'login': login,
+        'psw': password,
+        'phones': clean_phone,
+        'mes': message,
+        'charset': 'utf-8',
+        'fmt': '3',
+    })
+    url = f'https://smsc.ru/sys/send.php?{params}'
+    try:
+        urllib.request.urlopen(url, timeout=10)
+    except Exception:
+        pass
 
 
 def get_conn():
@@ -65,8 +88,21 @@ def handler(event: dict, context) -> dict:
         elif action == 'confirm_booking':
             bid = body.get('id')
             door_code = body.get('door_code', '')
+            cur.execute("SELECT phone, name, booking_date, start_time FROM bookings WHERE id = %s", (bid,))
+            brow = cur.fetchone()
             cur.execute("UPDATE bookings SET status = 'confirmed', door_code = %s WHERE id = %s", (door_code, bid))
             conn.commit()
+            if brow and door_code:
+                phone, name, bdate, btime = brow
+                btime_str = str(btime)[:5]
+                bdate_parts = str(bdate).split('-')
+                bdate_str = f"{bdate_parts[2]}.{bdate_parts[1]}.{bdate_parts[0]}" if len(bdate_parts) == 3 else str(bdate)
+                sms_text = (
+                    f"Теннисный корт Бурцево: ваша бронь на {bdate_str} в {btime_str} подтверждена! "
+                    f"Пароль от корта: {door_code}. "
+                    f"Оплата за 1 час до начала на 8930278-29-29 (Арсений, Т-Банк)."
+                )
+                send_sms(phone, sms_text)
             return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'success': True})}
 
         elif action == 'cancel_booking':

@@ -39,6 +39,7 @@ export default function AccountModal({ onClose, savedPhone = '', savedName = '' 
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
   const [cancellingId, setCancellingId] = useState<number | null>(null);
+  const [visibleCodes, setVisibleCodes] = useState<Set<number>>(new Set());
 
   const doSearch = async (digits: string) => {
     setLoading(true); setError('');
@@ -186,8 +187,20 @@ export default function AccountModal({ onClose, savedPhone = '', savedName = '' 
                     )}
                     {b.status === 'confirmed' && b.door_code && (
                       <div className="bg-[#d8f3dc] border border-[#95d5b2] rounded-lg p-2 mb-2">
-                        <p className="text-xs text-[#1b4332] font-semibold mb-0.5">Пароль от корта</p>
-                        <p className="text-lg font-bold text-[#2d6a4f] tracking-widest">{b.door_code}</p>
+                        <p className="text-xs text-[#1b4332] font-semibold mb-1">Пароль от корта</p>
+                        <button
+                          onClick={() => setVisibleCodes(prev => {
+                            const next = new Set(prev);
+                            if (next.has(b.id)) { next.delete(b.id); } else { next.add(b.id); }
+                            return next;
+                          })}
+                          className="flex items-center gap-2 w-full"
+                        >
+                          <span className={`text-xl font-bold text-[#2d6a4f] tracking-widest ${!visibleCodes.has(b.id) ? 'blur-sm select-none' : ''}`}>
+                            {b.door_code}
+                          </span>
+                          <Icon name={visibleCodes.has(b.id) ? 'EyeOff' : 'Eye'} size={14} className="text-[#2d6a4f] shrink-0" />
+                        </button>
                       </div>
                     )}
                     {b.status !== 'cancelled' && b.status !== 'confirmed' && (

@@ -107,6 +107,7 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
   const [bookingId, setBookingId] = useState<number | null>(null);
   const [bookingStatus, setBookingStatus] = useState<string>('pending');
   const [doorCode, setDoorCode] = useState<string | null>(null);
+  const [codeVisible, setCodeVisible] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const endTime = (() => {
@@ -261,9 +262,22 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
 
           {bookingStatus === 'confirmed' && doorCode && (
             <div className="bg-[#d8f3dc] border border-[#95d5b2] rounded-xl p-4 text-left mb-4">
-              <p className="font-semibold text-[#1b4332] mb-1">Пароль от корта</p>
-              <p className="text-3xl font-bold text-[#2d6a4f] tracking-widest text-center py-2">{doorCode}</p>
-              <p className="text-xs text-[#2d6a4f] text-center mt-1">Введите этот код на замке двери</p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-semibold text-[#1b4332]">Пароль от корта</p>
+                <p className="text-xs text-[#2d6a4f]">также отправлен вам в SMS</p>
+              </div>
+              <button
+                onClick={() => setCodeVisible(v => !v)}
+                className="w-full flex items-center justify-between bg-white/60 rounded-lg px-4 py-3 hover:bg-white/80 transition-colors"
+              >
+                <span className={`text-2xl font-bold text-[#2d6a4f] tracking-widest ${!codeVisible ? 'blur-sm select-none' : ''}`}>
+                  {doorCode}
+                </span>
+                <Icon name={codeVisible ? 'EyeOff' : 'Eye'} size={18} className="text-[#2d6a4f] ml-3 shrink-0" />
+              </button>
+              <p className="text-xs text-[#2d6a4f] text-center mt-2">
+                {codeVisible ? 'Нажмите чтобы скрыть' : 'Нажмите чтобы показать код'}
+              </p>
             </div>
           )}
 
