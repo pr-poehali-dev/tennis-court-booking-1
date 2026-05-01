@@ -17,6 +17,7 @@ interface Booking {
   total_price: number;
   status: string;
   created_at: string;
+  door_code: string | null;
 }
 
 function formatPhoneDisplay(raw: string) {
@@ -183,11 +184,24 @@ export default function AccountModal({ onClose, savedPhone = '', savedName = '' 
                         {b.trainer && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">Тренер</span>}
                       </div>
                     )}
-                    {b.status !== 'cancelled' && (
+                    {b.status === 'confirmed' && b.door_code && (
+                      <div className="bg-[#d8f3dc] border border-[#95d5b2] rounded-lg p-2 mb-2">
+                        <p className="text-xs text-[#1b4332] font-semibold mb-0.5">Пароль от корта</p>
+                        <p className="text-lg font-bold text-[#2d6a4f] tracking-widest">{b.door_code}</p>
+                      </div>
+                    )}
+                    {b.status !== 'cancelled' && b.status !== 'confirmed' && (
                       <div className="bg-amber-50 rounded-lg p-2 mb-2">
                         <p className="text-xs text-amber-700">
                           Оплатите <strong>{b.total_price} ₽</strong> по номеру{' '}
                           <strong>8 930 278 29 29</strong> (Арсений, Т-Банк) за 1 час до начала
+                        </p>
+                      </div>
+                    )}
+                    {b.status === 'confirmed' && (
+                      <div className="bg-gray-50 rounded-lg p-2 mb-2">
+                        <p className="text-xs text-gray-500">
+                          Оплата: <strong>{b.total_price} ₽</strong> на 8 930 278 29 29 (Арсений, Т-Банк) за 1 час до начала
                         </p>
                       </div>
                     )}

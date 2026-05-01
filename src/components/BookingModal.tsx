@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Icon from '@/components/ui/icon';
 
 const BOOKINGS_URL = 'https://functions.poehali.dev/1c87f267-5e77-414e-8812-eec899d49002';
@@ -11,6 +11,27 @@ const DURATIONS = [
 ];
 
 const AGE_OPTIONS = ['3–6 лет', '7–12 лет', '13+ лет'];
+
+function RacketAgeSelector({ index, value, onChange }: { index: number; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="mb-2">
+      <p className="text-xs text-gray-500 mb-1">Ракетка {index + 1} — возраст игрока:</p>
+      <div className="flex gap-2 flex-wrap">
+        {AGE_OPTIONS.map(a => (
+          <button
+            key={a}
+            type="button"
+            onClick={() => onChange(a)}
+            className={`px-3 py-1 rounded-lg text-sm border transition-all
+              ${value === a ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'border-gray-200 text-gray-700 hover:border-[#2d6a4f]'}`}
+          >
+            {a}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function formatDate(d: Date) {
   const y = d.getFullYear();
@@ -70,7 +91,7 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
   const [duration, setDuration] = useState(1);
   const [balls, setBalls] = useState(false);
   const [racketsCount, setRacketsCount] = useState(0);
-  const [racketsAge, setRacketsAge] = useState('');
+  const [racketsAges, setRacketsAges] = useState<string[]>([]);
   const [trainer, setTrainer] = useState(false);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -83,6 +104,10 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
   const [slotError, setSlotError] = useState('');
   const [suggestion, setSuggestion] = useState('');
   const [success, setSuccess] = useState(false);
+  const [bookingId, setBookingId] = useState<number | null>(null);
+  const [bookingStatus, setBookingStatus] = useState<string>('pending');
+  const [doorCode, setDoorCode] = useState<string | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const endTime = (() => {
     if (!selectedTime) return '';
@@ -133,6 +158,10 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
     }
   }, [step]);
 
+  useEffect(() => {
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, []);
+
   const getDates = () => {
     const dates: Date[] = [];
     const cur = new Date(MIN_DATE);
@@ -156,7 +185,7 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
     const digits = parsePhone(phone);
     if (name.trim().length < 2) { setError('Введите имя'); return; }
     if (digits.length !== 11) { setError('Введите корректный номер телефона'); return; }
-    if (racketsCount > 0 && !racketsAge) { setError('Выберите возраст для ракетки'); return; }
+    if (racketsCount > 0 && racketsAges.slice(0, racketsCount).some(a => !a)) { setError('Выберите возраст для каждой ракетки'); return; }
 
     setLoading(true);
     setError('');
@@ -172,7 +201,7 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
           duration,
           balls,
           rackets_count: racketsCount,
-          rackets_age: racketsAge,
+          rackets_age: racketsAges.slice(0, racketsCount).join(', '),
           trainer,
           total_price: total,
         }),
@@ -181,7 +210,26 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
       if (res.ok && data.success) {
         localStorage.setItem('tennis_phone', digits);
         localStorage.setItem('tennis_name', name.trim());
+        setBookingId(data.id);
+        setBookingStatus('pending');
+        setDoorCode(null);
         setSuccess(true);
+        pollRef.current = setInterval(async () => {
+          try {
+            const pr = await fetch(`${BOOKINGS_URL}?phone=${digits}`);
+            const pd = await pr.json();
+            const bk = (pd.bookings || []).find((b: { id: number; status: string; door_code: string | null }) => b.id === data.id);
+            if (bk) {
+              setBookingStatus(bk.status);
+              if (bk.status === 'confirmed') {
+                setDoorCode(bk.door_code || null);
+                if (pollRef.current) clearInterval(pollRef.current);
+              } else if (bk.status === 'cancelled') {
+                if (pollRef.current) clearInterval(pollRef.current);
+              }
+            }
+          } catch (_e) { /* ignore */ }
+        }, 10000);
       } else if (data.error === 'time_conflict') {
         setError(data.message);
         setSuggestion(data.suggestion ? `Ближайший свободный: ${data.suggestion}` : '');
@@ -198,16 +246,39 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
     return (
       <ModalWrap onClose={onClose}>
         <div className="text-center py-8 px-4">
-          <div className="w-16 h-16 bg-[#d8f3dc] rounded-full flex items-center justify-center mx-auto mb-4">
-            <Icon name="CheckCircle" size={32} className="text-[#2d6a4f]" />
+          <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${bookingStatus === 'confirmed' ? 'bg-[#d8f3dc]' : 'bg-amber-50'}`}>
+            {bookingStatus === 'confirmed'
+              ? <Icon name="CheckCircle" size={32} className="text-[#2d6a4f]" />
+              : <Icon name="Clock" size={32} className="text-amber-500" />
+            }
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Бронь создана!</h2>
-          <p className="text-gray-600 mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            {bookingStatus === 'confirmed' ? 'Бронь подтверждена!' : 'Бронь создана!'}
+          </h2>
+          <p className="text-gray-600 mb-4">
             {selectedDate} с {selectedTime} до {endTime}
           </p>
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-left mb-6">
-            <p className="font-semibold text-amber-800 mb-1">Важно — оплата</p>
-            <p className="text-amber-700 text-sm">
+
+          {bookingStatus === 'confirmed' && doorCode && (
+            <div className="bg-[#d8f3dc] border border-[#95d5b2] rounded-xl p-4 text-left mb-4">
+              <p className="font-semibold text-[#1b4332] mb-1">Пароль от корта</p>
+              <p className="text-3xl font-bold text-[#2d6a4f] tracking-widest text-center py-2">{doorCode}</p>
+              <p className="text-xs text-[#2d6a4f] text-center mt-1">Введите этот код на замке двери</p>
+            </div>
+          )}
+
+          {bookingStatus !== 'confirmed' && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-left mb-4">
+              <p className="font-semibold text-amber-800 mb-1">Ожидает подтверждения</p>
+              <p className="text-amber-700 text-sm">
+                Мы проверяем бронь и скоро пришлём код от корта. Страницу можно не закрывать — код появится здесь автоматически.
+              </p>
+            </div>
+          )}
+
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-left mb-6">
+            <p className="font-semibold text-gray-700 mb-1">Оплата</p>
+            <p className="text-gray-600 text-sm">
               Переведите <strong>{total} ₽</strong> по номеру{' '}
               <strong>8 930 278 29 29</strong> (Арсений, Т-Банк) не позднее чем
               за 1 час до начала. Иначе бронь сгорает.
@@ -435,20 +506,19 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
                 </div>
               </div>
               {racketsCount > 0 && (
-                <div>
-                  <p className="text-sm text-gray-600 mb-2">Возраст игрока:</p>
-                  <div className="flex gap-2 flex-wrap">
-                    {AGE_OPTIONS.map(a => (
-                      <button
-                        key={a}
-                        onClick={() => setRacketsAge(a)}
-                        className={`px-3 py-1 rounded-lg text-sm border transition-all
-                          ${racketsAge === a ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'border-gray-200 text-gray-700 hover:border-[#2d6a4f]'}`}
-                      >
-                        {a}
-                      </button>
-                    ))}
-                  </div>
+                <div className="mt-2 space-y-2">
+                  {Array.from({ length: racketsCount }).map((_, i) => (
+                    <RacketAgeSelector
+                      key={i}
+                      index={i}
+                      value={racketsAges[i] || ''}
+                      onChange={v => {
+                        const next = [...racketsAges];
+                        next[i] = v;
+                        setRacketsAges(next);
+                      }}
+                    />
+                  ))}
                 </div>
               )}
             </div>

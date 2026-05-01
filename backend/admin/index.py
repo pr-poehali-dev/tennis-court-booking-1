@@ -46,7 +46,7 @@ def handler(event: dict, context) -> dict:
     try:
         if action == 'get_bookings':
             cur.execute(
-                "SELECT id, name, phone, booking_date, start_time, duration, balls, rackets_count, rackets_age, trainer, total_price, status, created_at FROM bookings ORDER BY booking_date, start_time"
+                "SELECT id, name, phone, booking_date, start_time, duration, balls, rackets_count, rackets_age, trainer, total_price, status, created_at, door_code FROM bookings ORDER BY booking_date, start_time"
             )
             rows = cur.fetchall()
             bookings = []
@@ -57,13 +57,15 @@ def handler(event: dict, context) -> dict:
                     'duration': float(r[5]), 'balls': r[6],
                     'rackets_count': r[7], 'rackets_age': r[8],
                     'trainer': r[9], 'total_price': r[10],
-                    'status': r[11], 'created_at': str(r[12])
+                    'status': r[11], 'created_at': str(r[12]),
+                    'door_code': r[13]
                 })
             return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'bookings': bookings})}
 
         elif action == 'confirm_booking':
             bid = body.get('id')
-            cur.execute("UPDATE bookings SET status = 'confirmed' WHERE id = %s", (bid,))
+            door_code = body.get('door_code', '')
+            cur.execute("UPDATE bookings SET status = 'confirmed', door_code = %s WHERE id = %s", (door_code, bid))
             conn.commit()
             return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'success': True})}
 

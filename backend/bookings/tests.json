@@ -1,11 +1,11 @@
 {
   "tests": [
     {
-      "name": "Get all bookings",
+      "name": "Get all bookings returns list",
       "method": "GET",
       "path": "/",
       "expectedStatus": 200,
-      "expectedBody": {"bookings": []},
+      "expectedBody": {"bookings": [{"id": 16, "status": "pending"}]},
       "bodyMatcher": "partial"
     }
   ]

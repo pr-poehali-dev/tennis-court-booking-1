@@ -1,6 +1,7 @@
 import json
 import os
 import psycopg2
+from datetime import datetime
 
 CORS_HEADERS = {
     'Access-Control-Allow-Origin': '*',
@@ -47,6 +48,17 @@ def handler(event: dict, context) -> dict:
         )
         blocks = cur.fetchall()
 
+        now = datetime.now()
+        now_minutes = now.hour * 60 + now.minute
+
+        from datetime import date as date_type
+        try:
+            req_date = datetime.strptime(booking_date, '%Y-%m-%d').date()
+        except Exception:
+            req_date = None
+
+        is_today = (req_date == now.date()) if req_date else False
+
         slots = []
         for start_h in range(7, 24):
             for start_m in [0, 30]:
@@ -63,15 +75,20 @@ def handler(event: dict, context) -> dict:
                 blocked = False
                 block_reason = None
 
-                for bt, bet, btype in blocks:
-                    if btype == 'trainer' and not check_trainer:
-                        continue
-                    bt_min = bt.hour * 60 + bt.minute
-                    bet_min = bet.hour * 60 + bet.minute
-                    if not (end_minutes <= bt_min or start_minutes >= bet_min):
-                        blocked = True
-                        block_reason = 'trainer' if btype == 'trainer' else 'court'
-                        break
+                if is_today and start_minutes <= now_minutes:
+                    blocked = True
+                    block_reason = 'past'
+
+                if not blocked:
+                    for bt, bet, btype in blocks:
+                        if btype == 'trainer' and not check_trainer:
+                            continue
+                        bt_min = bt.hour * 60 + bt.minute
+                        bet_min = bet.hour * 60 + bet.minute
+                        if not (end_minutes <= bt_min or start_minutes >= bet_min):
+                            blocked = True
+                            block_reason = 'trainer' if btype == 'trainer' else 'court'
+                            break
 
                 if not blocked:
                     for bst, bdur in booked:

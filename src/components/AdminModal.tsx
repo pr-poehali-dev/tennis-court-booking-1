@@ -56,6 +56,8 @@ export default function AdminModal({ onClose }: { onClose: () => void }) {
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoUrl, setPhotoUrl] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
+  const [confirmingId, setConfirmingId] = useState<number | null>(null);
+  const [doorCodeInput, setDoorCodeInput] = useState('');
 
   // Автозагрузка если уже авторизован на этом устройстве
   useEffect(() => {
@@ -108,9 +110,11 @@ export default function AdminModal({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const confirmBooking = async (id: number) => {
-    await req({ action: 'confirm_booking', id });
+  const confirmBooking = async (id: number, doorCode: string) => {
+    await req({ action: 'confirm_booking', id, door_code: doorCode });
     setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'confirmed' } : b));
+    setConfirmingId(null);
+    setDoorCodeInput('');
   };
 
   const cancelBooking = async (id: number) => {
@@ -247,13 +251,39 @@ export default function AdminModal({ onClose }: { onClose: () => void }) {
                     </div>
                   )}
                   <div className="flex gap-2 flex-wrap">
-                    {b.status !== 'cancelled' && b.status !== 'confirmed' && (
+                    {b.status !== 'cancelled' && b.status !== 'confirmed' && confirmingId !== b.id && (
                       <button
-                        onClick={() => confirmBooking(b.id)}
+                        onClick={() => { setConfirmingId(b.id); setDoorCodeInput(''); }}
                         className="text-sm bg-[#d8f3dc] text-[#2d6a4f] font-medium px-3 py-1.5 rounded-lg hover:bg-[#b7e4c7] transition-colors"
                       >
                         Подтвердить
                       </button>
+                    )}
+                    {confirmingId === b.id && (
+                      <div className="w-full mt-1 flex flex-col gap-2">
+                        <input
+                          type="text"
+                          value={doorCodeInput}
+                          onChange={e => setDoorCodeInput(e.target.value)}
+                          placeholder="Код от двери корта"
+                          className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-full focus:outline-none focus:border-[#2d6a4f]"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => confirmBooking(b.id, doorCodeInput)}
+                            disabled={!doorCodeInput.trim()}
+                            className="text-sm bg-[#2d6a4f] text-white font-medium px-3 py-1.5 rounded-lg hover:bg-[#1b4332] transition-colors disabled:opacity-40"
+                          >
+                            Подтвердить
+                          </button>
+                          <button
+                            onClick={() => { setConfirmingId(null); setDoorCodeInput(''); }}
+                            className="text-sm bg-gray-100 text-gray-600 font-medium px-3 py-1.5 rounded-lg hover:bg-gray-200 transition-colors"
+                          >
+                            Отмена
+                          </button>
+                        </div>
+                      </div>
                     )}
                     {b.status !== 'cancelled' && (
                       <button

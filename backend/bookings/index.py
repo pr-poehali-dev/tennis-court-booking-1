@@ -34,12 +34,12 @@ def handler(event: dict, context) -> dict:
             phone = (event.get('queryStringParameters') or {}).get('phone', '')
             if phone:
                 cur.execute(
-                    "SELECT id, name, phone, booking_date, start_time, duration, balls, rackets_count, rackets_age, trainer, total_price, status, created_at FROM bookings WHERE phone = %s ORDER BY booking_date, start_time",
+                    "SELECT id, name, phone, booking_date, start_time, duration, balls, rackets_count, rackets_age, trainer, total_price, status, created_at, door_code FROM bookings WHERE phone = %s ORDER BY booking_date, start_time",
                     (phone,)
                 )
             else:
                 cur.execute(
-                    "SELECT id, name, phone, booking_date, start_time, duration, balls, rackets_count, rackets_age, trainer, total_price, status, created_at FROM bookings ORDER BY booking_date, start_time"
+                    "SELECT id, name, phone, booking_date, start_time, duration, balls, rackets_count, rackets_age, trainer, total_price, status, created_at, door_code FROM bookings ORDER BY booking_date, start_time"
                 )
             rows = cur.fetchall()
             bookings = []
@@ -50,7 +50,8 @@ def handler(event: dict, context) -> dict:
                     'duration': float(r[5]), 'balls': r[6],
                     'rackets_count': r[7], 'rackets_age': r[8],
                     'trainer': r[9], 'total_price': r[10],
-                    'status': r[11], 'created_at': str(r[12])
+                    'status': r[11], 'created_at': str(r[12]),
+                    'door_code': r[13]
                 })
             return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'bookings': bookings})}
 
@@ -153,7 +154,8 @@ def handler(event: dict, context) -> dict:
                 return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'success': True})}
 
             elif action == 'confirm':
-                cur.execute("UPDATE bookings SET status = 'confirmed' WHERE id = %s", (booking_id,))
+                door_code = body.get('door_code', '')
+                cur.execute("UPDATE bookings SET status = 'confirmed', door_code = %s WHERE id = %s", (door_code, booking_id))
                 conn.commit()
                 return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'success': True})}
 
