@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Icon from '@/components/ui/icon';
 
 const ADMIN_URL = 'https://functions.poehali.dev/0043f98f-94ed-4fe0-aaa1-d7b96efb3382';
@@ -58,6 +58,43 @@ export default function AdminModal({ onClose }: { onClose: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
   const [doorCodeInput, setDoorCodeInput] = useState('');
+  const knownIdsRef = useRef<Set<number> | null>(null);
+  const pollAdminRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startAdminPolling = useCallback((initialBookings: Booking[]) => {
+    knownIdsRef.current = new Set(initialBookings.map(b => b.id));
+    if ('Notification' in window) Notification.requestPermission().catch(() => {});
+    if (pollAdminRef.current) clearInterval(pollAdminRef.current);
+    pollAdminRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(ADMIN_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Token': 'admin_ok' },
+          body: JSON.stringify({ action: 'get_bookings' }),
+        });
+        const data = await res.json();
+        const fresh: Booking[] = data.bookings || [];
+        const newOnes = fresh.filter(b => b.status === 'pending' && !knownIdsRef.current!.has(b.id));
+        if (newOnes.length > 0 && 'Notification' in window && Notification.permission === 'granted') {
+          newOnes.forEach(b => {
+            new Notification('Новая бронь — Tennis Court', {
+              body: `${b.name} • ${b.booking_date} в ${b.start_time.slice(0, 5)} • ${b.total_price} ₽`,
+              icon: '/favicon.ico',
+            });
+          });
+        }
+        knownIdsRef.current = new Set(fresh.map(b => b.id));
+        if (newOnes.length > 0) {
+          // обновляем список в UI тоже
+          setBookings(fresh);
+        }
+      } catch (_e) { /* ignore */ }
+    }, 30000);
+  }, []);
+
+  useEffect(() => {
+    return () => { if (pollAdminRef.current) clearInterval(pollAdminRef.current); };
+  }, []);
 
   // Автозагрузка если уже авторизован на этом устройстве
   useEffect(() => {
@@ -100,9 +137,11 @@ export default function AdminModal({ onClose }: { onClose: () => void }) {
         req({ action: 'get_blocks' }),
         req({ action: 'get_reviews' }),
       ]);
-      setBookings(bRes.bookings || []);
+      const loadedBookings = bRes.bookings || [];
+      setBookings(loadedBookings);
       setBlocks(blRes.blocks || []);
       setReviews(rRes.reviews || []);
+      startAdminPolling(loadedBookings);
     } catch {
       setLoadError('Не удалось загрузить данные. Попробуйте обновить.');
     } finally {
