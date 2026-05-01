@@ -215,6 +215,9 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
         setBookingStatus('pending');
         setDoorCode(null);
         setSuccess(true);
+        if ('Notification' in window) {
+          Notification.requestPermission().catch(() => {});
+        }
         pollRef.current = setInterval(async () => {
           try {
             const pr = await fetch(`${BOOKINGS_URL}?phone=${digits}`);
@@ -223,8 +226,17 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
             if (bk) {
               setBookingStatus(bk.status);
               if (bk.status === 'confirmed') {
-                setDoorCode(bk.door_code || null);
+                const code = bk.door_code || null;
+                setDoorCode(code);
                 if (pollRef.current) clearInterval(pollRef.current);
+                if ('Notification' in window && Notification.permission === 'granted') {
+                  new Notification('Теннисный корт Бурцево', {
+                    body: code
+                      ? `Бронь подтверждена! Пароль от корта: ${code}`
+                      : 'Ваша бронь подтверждена!',
+                    icon: '/favicon.ico',
+                  });
+                }
               } else if (bk.status === 'cancelled') {
                 if (pollRef.current) clearInterval(pollRef.current);
               }
@@ -285,7 +297,10 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-left mb-4">
               <p className="font-semibold text-amber-800 mb-1">Ожидает подтверждения</p>
               <p className="text-amber-700 text-sm">
-                Мы проверяем бронь и скоро пришлём код от корта. Страницу можно не закрывать — код появится здесь автоматически.
+                Когда бронь подтвердят — код от корта появится прямо здесь{' '}
+                {'Notification' in window && Notification.permission === 'granted'
+                  ? 'и придёт уведомление на ваше устройство.'
+                  : 'на этой странице.'}
               </p>
             </div>
           )}

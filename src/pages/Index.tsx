@@ -111,7 +111,7 @@ export default function Index() {
             <span className="font-semibold text-gray-800 text-sm">Богородский район, д. Бурцево, Вишнёвый переулок 17Б</span>
           </div>
           <iframe
-            src="https://yandex.ru/map-widget/v1/?text=%D0%91%D0%BE%D0%B3%D0%BE%D1%80%D0%BE%D0%B4%D1%81%D0%BA%D0%B8%D0%B9%20%D1%80%D0%B0%D0%B9%D0%BE%D0%BD%2C%20%D0%B4.%20%D0%91%D1%83%D1%80%D1%86%D0%B5%D0%B2%D0%BE%2C%20%D0%92%D0%B8%D1%88%D0%BD%D1%91%D0%B2%D1%8B%D0%B9%20%D0%BF%D0%B5%D1%80%D0%B5%D1%83%D0%BB%D0%BE%D0%BA%2017%D0%91&z=16&l=map&pt=35.8297,56.1183,pm2rdm~35.8297,56.1183,pm2rdl"
+            src="https://yandex.ru/map-widget/v1/?text=%D0%9C%D0%BE%D1%81%D0%BA%D0%BE%D0%B2%D1%81%D0%BA%D0%B0%D1%8F+%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D1%8C%2C+%D0%91%D0%BE%D0%B3%D0%BE%D1%80%D0%BE%D0%B4%D1%81%D0%BA%D0%B8%D0%B9+%D1%80%D0%B0%D0%B9%D0%BE%D0%BD%2C+%D0%91%D1%83%D1%80%D1%86%D0%B5%D0%B2%D0%BE%2C+%D0%92%D0%B8%D1%88%D0%BD%D1%91%D0%B2%D1%8B%D0%B9+%D0%BF%D0%B5%D1%80%D0%B5%D1%83%D0%BB%D0%BE%D0%BA+17%D0%91&z=16&l=map"
             width="100%"
             height="320"
             style={{ border: 0, display: 'block' }}
