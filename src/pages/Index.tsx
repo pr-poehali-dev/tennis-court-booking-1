@@ -111,7 +111,7 @@ export default function Index() {
             <span className="font-semibold text-gray-800 text-sm">Нижегородская область, Богородский округ, д. Бурцево, Вишнёвый переулок 17Б</span>
           </div>
           <iframe
-            src="https://yandex.ru/map-widget/v1/?ll=43.723578%2C56.138430&z=16&l=map&pt=43.723578%2C56.138430%2Cpm2rdm"
+            src="https://yandex.ru/map-widget/v1/?ll=43.716247%2C56.142387&z=17&l=map&pt=43.716247%2C56.142387%2Cpm2rdm"
             width="100%"
             height="320"
             style={{ border: 0, display: 'block' }}
@@ -119,7 +119,7 @@ export default function Index() {
             title="Карта"
           />
           <a
-            href="https://yandex.ru/maps/?pt=43.723578,56.138430&z=16&l=map"
+            href="https://yandex.ru/maps/?pt=43.716247,56.142387&z=17&l=map"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 px-4 py-3 bg-white border-t border-gray-100 text-[#2d6a4f] text-sm font-medium hover:bg-gray-50 transition-colors"
