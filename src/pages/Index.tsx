@@ -111,13 +111,22 @@ export default function Index() {
             <span className="font-semibold text-gray-800 text-sm">Нижегородская область, Богородский округ, д. Бурцево, Вишнёвый переулок 17Б</span>
           </div>
           <iframe
-            src="https://yandex.ru/map-widget/v1/?text=%D0%9D%D0%B8%D0%B6%D0%B5%D0%B3%D0%BE%D1%80%D0%BE%D0%B4%D1%81%D0%BA%D0%B0%D1%8F+%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D1%8C%2C+%D0%91%D0%BE%D0%B3%D0%BE%D1%80%D0%BE%D0%B4%D1%81%D0%BA%D0%B8%D0%B9+%D0%BC%D1%83%D0%BD%D0%B8%D1%86%D0%B8%D0%BF%D0%B0%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D0%BE%D0%BA%D1%80%D1%83%D0%B3%2C+%D0%B4%D0%B5%D1%80%D0%B5%D0%B2%D0%BD%D1%8F+%D0%91%D1%83%D1%80%D1%86%D0%B5%D0%B2%D0%BE%2C+%D0%92%D0%B8%D1%88%D0%BD%D1%91%D0%B2%D1%8B%D0%B9+%D0%BF%D0%B5%D1%80%D0%B5%D1%83%D0%BB%D0%BE%D0%BA+17%D0%91&z=16&l=map"
+            src="https://yandex.ru/map-widget/v1/?ll=43.723578%2C56.138430&z=16&l=map&pt=43.723578%2C56.138430%2Cpm2rdm"
             width="100%"
             height="320"
             style={{ border: 0, display: 'block' }}
             allowFullScreen
             title="Карта"
           />
+          <a
+            href="https://yandex.ru/maps/?pt=43.723578,56.138430&z=16&l=map"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-white border-t border-gray-100 text-[#2d6a4f] text-sm font-medium hover:bg-gray-50 transition-colors"
+          >
+            <Icon name="Navigation" size={15} />
+            Мы находимся здесь — открыть в Яндекс Картах
+          </a>
         </div>
       </div>
 
