@@ -1,7 +1,9 @@
 import json
 import os
 import psycopg2
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+
+MSK = timezone(timedelta(hours=3))
 
 CORS_HEADERS = {
     'Access-Control-Allow-Origin': '*',
@@ -48,10 +50,9 @@ def handler(event: dict, context) -> dict:
         )
         blocks = cur.fetchall()
 
-        now = datetime.now()
+        now = datetime.now(MSK)
         now_minutes = now.hour * 60 + now.minute
 
-        from datetime import date as date_type
         try:
             req_date = datetime.strptime(booking_date, '%Y-%m-%d').date()
         except Exception:
